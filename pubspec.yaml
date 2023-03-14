@@ -38,3 +38,7 @@ flutter_icons:
 
 flutter:
   uses-material-design: true
+  fonts:
+    - family: PokerIcons
+      fonts:
+        - asset: assets/fonts/PokerIcons.ttf
