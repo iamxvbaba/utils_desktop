@@ -208,3 +208,13 @@ class RankParseFailureException implements Exception {
 
   String get message => '$value is not a valid string as a rank.';
 }
+
+
+class PlayedCardModel {
+  final String name;
+  final Rank rank;
+  final Suit suit;
+  bool win = false;
+
+  PlayedCardModel(this.name, this.rank, this.suit);
+}
