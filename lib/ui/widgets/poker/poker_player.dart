@@ -1,20 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:skeleton_desktop/ui/widgets/poker/model.dart';
+import 'package:get/get.dart';
+
+import '../../../controllers/pages/poker_table_controller.dart';
 
 class PokerPlayer extends StatelessWidget {
   final String name;
   final bool isSelf;
   final List<Widget>? children;
 
-  final bool isBid; // 展示出价按钮
-  final bool isAnnounce; // 展示声明
+  final List<BidType> bidTypes; // 展示出价按钮
+  final List<AnnounceType> announcesTypes; // 展示出价按钮
 
   const PokerPlayer(
       {required this.name,
       this.isSelf = false,
       this.children,
-      this.isBid = false,
-      this.isAnnounce = false,
+      required this.bidTypes,
+      required this.announcesTypes,
       super.key});
+
+  bool hasBid(BidType bt) {
+    return bidTypes.contains(bt);
+  }
 
   Widget _buildName() {
     return Padding(
@@ -75,6 +83,7 @@ class PokerPlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final PokerTableController controller = Get.find();
     if (isSelf) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 10),
@@ -89,31 +98,52 @@ class PokerPlayer extends StatelessWidget {
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: _buildBidButton(() {}, "Sun", isBid),
+                  child: _buildBidButton(() {
+                    if (hasBid(BidType.clubs)) {
+                      controller.bid(BidType.clubs);
+                    } else if (hasBid(BidType.diamonds)) {
+                      controller.bid(BidType.diamonds);
+                    } else if (hasBid(BidType.hearts)) {
+                      controller.bid(BidType.hearts);
+                    } else {
+                      controller.bid(BidType.spades);
+                    }
+                  },
+                      "Sun",
+                      hasBid(BidType.clubs) ||
+                          hasBid(BidType.diamonds) ||
+                          hasBid(BidType.hearts) ||
+                          hasBid(BidType.spades)),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: _buildBidButton(() {}, "Hokom", isBid),
+                  child:
+                      _buildBidButton(() {}, "Hokom", hasBid(BidType.noTrumps)),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: _buildBidButton(() {}, "Double", isBid),
+                  child:
+                      _buildBidButton(() {}, "Double", hasBid(BidType.double)),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: _buildBidButton(() {}, "ReD", isBid),
+                  child:
+                      _buildBidButton(() {}, "ReD", hasBid(BidType.reDouble)),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: _buildAnnounceButton(() {}, "Seq3", isAnnounce),
+                  child: _buildAnnounceButton(() {}, "Seq3",
+                      announcesTypes.contains(AnnounceType.SequenceOf3)),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: _buildAnnounceButton(() {}, "Seq4", isAnnounce),
+                  child: _buildAnnounceButton(() {}, "Seq4",
+                      announcesTypes.contains(AnnounceType.SequenceOf4)),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: _buildAnnounceButton(() {}, "Seq5", isAnnounce),
+                  child: _buildAnnounceButton(() {}, "Seq5",
+                      announcesTypes.contains(AnnounceType.SequenceOf5)),
                 ),
               ],
             ),

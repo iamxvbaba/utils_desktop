@@ -32,30 +32,49 @@ class PokerTableLayout extends GetView<PokerTableController> {
                     controller.snTotalPoint.value,
                     controller.snPoint.value)),
             Positioned(
+                bottom: 20,
+                right: 20,
+                child: ElevatedButton(
+                  onPressed: controller.connect,
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    backgroundColor: Colors.lightBlue,
+                  ),
+                  child: Text('连接服务器'),
+                )),
+            Positioned(
                 child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const PokerPlayer(
                   name: "west",
+                  bidTypes: [],
+                  announcesTypes: [],
                 ),
                 Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     PokerPlayer(
                       name: "north",
+                      bidTypes: [],
+                      announcesTypes: [],
                     ),
                     PokerPlayedCardList(controller.buildPlayedCards()),
                     PokerPlayer(
                       name: controller.myPosition.value,
                       isSelf: true,
-                      isBid: true,
-                      isAnnounce: true,
+                      bidTypes: controller.bids.value,
+                      announcesTypes: controller.announces.value,
                       children: controller.buildCards(),
                     )
                   ],
                 ),
                 const PokerPlayer(
                   name: "east",
+                  bidTypes: [],
+                  announcesTypes: [],
                 ),
               ],
             ))

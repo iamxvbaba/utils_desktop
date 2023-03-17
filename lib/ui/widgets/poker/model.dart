@@ -65,8 +65,6 @@ class SuitParseFailureException implements Exception {
   String get message => '$value is not a valid string as a rank.';
 }
 
-
-
 enum Rank {
   ace(12),
   deuce(0),
@@ -209,7 +207,6 @@ class RankParseFailureException implements Exception {
   String get message => '$value is not a valid string as a rank.';
 }
 
-
 class PlayedCardModel {
   final String name;
   final Rank rank;
@@ -217,4 +214,204 @@ class PlayedCardModel {
   bool win = false;
 
   PlayedCardModel(this.name, this.rank, this.suit);
+}
+
+enum BidType {
+  pass,
+  clubs,
+  diamonds,
+  hearts,
+  spades,
+  noTrumps,
+  double,
+  reDouble
+}
+
+extension BidTypeExtension on BidType {
+  String get value {
+    switch (this) {
+      case BidType.pass:
+        return "Pass";
+      case BidType.clubs:
+        return "Clubs";
+      case BidType.diamonds:
+        return "Diamonds";
+      case BidType.hearts:
+        return "Hearts";
+      case BidType.spades:
+        return "Spades";
+      case BidType.noTrumps:
+        return "NoTrumps";
+      case BidType.double:
+        return "Double";
+      case BidType.reDouble:
+        return "ReDouble";
+      default:
+        return "";
+    }
+  }
+
+  List<BidType> toList() {
+    List<BidType> bts = [];
+    if (has(BidType.pass)) {
+      bts.add(BidType.pass);
+    }
+    if (has(BidType.clubs)) {
+      bts.add(BidType.clubs);
+    }
+    if (has(BidType.diamonds)) {
+      bts.add(BidType.diamonds);
+    }
+    if (has(BidType.hearts)) {
+      bts.add(BidType.hearts);
+    }
+    if (has(BidType.spades)) {
+      bts.add(BidType.spades);
+    }
+    if (has(BidType.noTrumps)) {
+      bts.add(BidType.noTrumps);
+    }
+    if (has(BidType.double)) {
+      bts.add(BidType.double);
+    }
+    if (has(BidType.reDouble)) {
+      bts.add(BidType.reDouble);
+    }
+    return bts;
+  }
+
+  bool has(BidType bt2) {
+    return (index & bt2.index) == bt2.index;
+  }
+
+  int get index {
+    switch (this) {
+      case BidType.pass:
+        return 0;
+      case BidType.clubs:
+        return 1 << 0; // ♣️
+      case BidType.diamonds:
+        return 1 << 1; // ♦️
+      case BidType.hearts:
+        return 1 << 2; // ♥️
+      case BidType.spades:
+        return 1 << 3; // ♠️
+      case BidType.noTrumps:
+        return 1 << 4;
+      case BidType.double:
+        return 1 << 5;
+      case BidType.reDouble:
+        return 1 << 6;
+      default:
+        return -1;
+    }
+  }
+}
+
+BidType bidTypeFromString(String val) {
+  switch (val) {
+    case 'Pass':
+      return BidType.pass;
+    case 'Clubs':
+      return BidType.clubs;
+    case 'Diamonds':
+      return BidType.diamonds;
+    case 'Hearts':
+      return BidType.hearts;
+    case 'Spades':
+      return BidType.spades;
+    case 'NoTrumps':
+      return BidType.noTrumps;
+    case 'Double':
+      return BidType.double;
+    case 'ReDouble':
+      return BidType.reDouble;
+  }
+  return BidType.pass;
+}
+
+List<BidType> bidTypeFromStrings(List<dynamic> vals) {
+  List<BidType> bts = [];
+  for (var element in vals) {
+    bts.add(bidTypeFromString(element));
+  }
+  return bts;
+}
+
+// AnnounceType 玩家声明牌型对应可获得积分
+enum AnnounceType {
+  Baloot,
+  SequenceOf3,
+  SequenceOf4,
+  SequenceOf5,
+  SequenceOf6,
+  SequenceOf7,
+  SequenceOf8,
+  FourOfAKind,
+  FourNines,
+  FourJacks
+}
+
+extension AnnounceTypeExtension on AnnounceType {
+  String toShortString() {
+    switch (this) {
+      case AnnounceType.Baloot:
+        return "Baloot";
+      case AnnounceType.SequenceOf3:
+        return "SequenceOf3";
+      case AnnounceType.SequenceOf4:
+        return "SequenceOf4";
+      case AnnounceType.SequenceOf5:
+        return "SequenceOf5";
+      case AnnounceType.SequenceOf6:
+        return "SequenceOf6";
+      case AnnounceType.SequenceOf7:
+        return "SequenceOf7";
+      case AnnounceType.SequenceOf8:
+        return "SequenceOf8";
+      case AnnounceType.FourOfAKind:
+        return "FourOfAKind";
+      case AnnounceType.FourNines:
+        return "FourNines";
+      case AnnounceType.FourJacks:
+        return "FourJacks";
+      default:
+        throw Exception('Invalid announce type');
+    }
+  }
+}
+
+AnnounceType announceTypeFromString(String val) {
+  switch (val) {
+    case 'Baloot':
+      return AnnounceType.Baloot;
+    case 'SequenceOf3':
+      return AnnounceType.SequenceOf3;
+    case 'SequenceOf4':
+      return AnnounceType.SequenceOf4;
+    case 'SequenceOf5':
+      return AnnounceType.SequenceOf5;
+    case 'SequenceOf6':
+      return AnnounceType.SequenceOf6;
+    case 'SequenceOf7':
+      return AnnounceType.SequenceOf7;
+    case 'SequenceOf8':
+      return AnnounceType.SequenceOf8;
+    case 'FourOfAKind':
+      return AnnounceType.FourOfAKind;
+    case 'FourNines':
+      return AnnounceType.FourNines;
+    case 'FourJacks':
+      return AnnounceType.FourJacks;
+    default:
+      throw Exception('Invalid announce type');
+  }
+}
+
+List<AnnounceType> announceTypeFromStrings(List<dynamic> val) {
+  List<AnnounceType> list = [];
+  for (var element in val) {
+    list.add(announceTypeFromString(element));
+  }
+  return list;
 }
