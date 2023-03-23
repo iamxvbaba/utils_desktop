@@ -8,10 +8,22 @@ import '../../ui/widgets/poker/poker_card.dart';
 import '../../ui/widgets/poker/poker_played_card.dart';
 
 class PokerTableController extends GetxController {
-  RxString myPosition = 'south'.obs;
+  RxInt myPosition = 1.obs;
+
+  RxList<PlayedCardModel> trumpCards = RxList.from([]); // 王牌,只会有一张
+  RxList<PlayedCardModel> cards = RxList.from([]); // 手中的牌
   RxList<PlayedCardModel> playedCards = RxList.empty(growable: true); // 已出的牌
-  RxList<BidType> bids = RxList.empty(growable: false);
+
+  late PlayedCardModel trumpCard; // 王牌
+  RxInt trumpOwnerPosition = 0.obs; // 王牌所属用户
+
+  RxList<BidType> availableBids = RxList.empty(growable: false);
   RxList<AnnounceType> announces = RxList.empty(growable: false);
+
+  RxInt currentBidPlayer = 0.obs; // 当前出价的用户
+  late BidType currentBid; // 当前出价
+
+  RxInt currentActionPlayer = 0.obs; // 当前出牌者
 
   late WebSocket _ws;
 
@@ -23,35 +35,11 @@ class PokerTableController extends GetxController {
   void onInit() {
     super.onInit();
     _ws = WebSocket(
-        baseUrl: "ws://127.0.0.1:8080",
+        baseUrl: "ws://127.0.0.1:8080/baloot",
         gameId: "123",
         token:
-            "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NzkyOTQ4MDMsIlVzZXJJZCI6MjM3NjYsIlN0YXR1cyI6MCwiR2VuZGVyIjowLCJBdXRoS2V5IjowLCJJcCI6IiIsIkRldmljZUlkIjoiIiwiUmVsZWFzZSI6ZmFsc2UsIkF1ZGl0IjpmYWxzZX0.kOVwPKsXk1YVYM4SD1fiRVJ5nr2P_q7ZkkkWr8GlTWV6A8wwqgqEorTo58gQWhfFl57ZkzY4fcM20u-jrSJ3SilWTi7U9JVr7rxC8OCBFbfTUtIThYOAE1bSoFZtpvmyMkkWp7AQZyugCXy2G6KqMrg2KRHqs8NbvplYsXniHEkpErNSj-2g9fLUkhasIKnPPXgdIPPSPuTAn9DuABD72zNP4mW7GzNkkibf5Hi_sVyECvBorZjpPhmSy5guR87B7ThuKqi3B8IM6rvmZwHR4jH3207BrjtKK3OO-0r15wp4O-G11tS7Wqqwvxym7DUevdOdlzk01Mz2f7a9ZhIKRQ",
+            "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTEwNzY3OTMsIlVzZXJJZCI6MjM3NjYsIlN0YXR1cyI6MCwiR2VuZGVyIjowLCJBdXRoS2V5IjowLCJJcCI6IiIsIkRldmljZUlkIjoiIiwiUmVsZWFzZSI6ZmFsc2UsIkF1ZGl0IjpmYWxzZX0.EDBE_ICRoNiKkiMSR9t5cgm-gRruMFlDBJ6F1QiDy51SqgUvTO4ZhIP7oLOgo80h1mNmSnfDUGfC9JlFHicy18_UpKoe3giWVo4qV9j6-yVKLvRWYCx_2CmIfQ8a1MEc8V85U_61GH7fEKn54WnUlN4ok4z5psjjDIEiEcxpKMy8WmqJOwhbijJP92PH8IMzJDYloLfTHEUGtUbOrzMWrkX5p0efdqxGo73PuSVsDV6lO_RB1YEqNxigds9C4Cwzu32XRSh1RIx3jJ5Qw9DRlYnjMW3HXjnl9yAeiIMHZbCWMpDY0qba-lonQYsXuneYqY-HtKS5OFMjhl9gTf9x9Q",
         handler: _handleProto);
-  }
-
-  RxList<PlayedCardModel> cards = RxList.from([
-    PlayedCardModel('south', Rank.king, Suit.spade),
-    PlayedCardModel('south', Rank.jack, Suit.club),
-    PlayedCardModel('south', Rank.ace, Suit.heart),
-    PlayedCardModel('south', Rank.king, Suit.diamond),
-    PlayedCardModel('south', Rank.ace, Suit.spade),
-    PlayedCardModel('south', Rank.ten, Suit.club),
-    PlayedCardModel('south', Rank.nine, Suit.heart),
-    PlayedCardModel('south', Rank.eight, Suit.diamond),
-  ]);
-
-  _initCards() {
-    cards.addAll([
-      PlayedCardModel('south', Rank.king, Suit.spade),
-      PlayedCardModel('south', Rank.jack, Suit.club),
-      PlayedCardModel('south', Rank.ace, Suit.heart),
-      PlayedCardModel('south', Rank.king, Suit.diamond),
-      PlayedCardModel('south', Rank.ace, Suit.spade),
-      PlayedCardModel('south', Rank.ten, Suit.club),
-      PlayedCardModel('south', Rank.nine, Suit.heart),
-      PlayedCardModel('south', Rank.eight, Suit.diamond),
-    ]);
   }
 
   RxInt ewTotalPoint = 152.obs; // 整盘东西方游戏积分
@@ -59,6 +47,19 @@ class PokerTableController extends GetxController {
 
   RxInt snTotalPoint = 45.obs;
   RxInt snPoint = 43.obs;
+
+  // 开始下一轮全部清空
+  _nextRound() {
+    availableBids.clear();
+    announces.clear();
+    trumpCards.clear();
+    cards.clear();
+    playedCards.clear();
+    ewPoint.value = 0;
+    snPoint.value = 0;
+    trumpOwnerPosition.value = 0;
+    currentBidPlayer.value = 0;
+  }
 
   _addPlayedCard(PlayedCardModel cm) {
     if (playedCards.length >= 4) {
@@ -87,9 +88,40 @@ class PokerTableController extends GetxController {
     }
 
     // 再添加一些牌，用于测试
-    if (cards.isEmpty) {
-      _initCards();
+    if (cards.isEmpty) {}
+  }
+
+  Widget buildBid() {
+    double? top, bottom, left, right;
+    switch (currentBidPlayer.value) {
+      case 1: // south
+        left = 400;
+        bottom = 180;
+        break;
+      case 2: // east
+        bottom = 380;
+        right = 80;
+        break;
+      case 4: // north
+        left = 400;
+        top = 80;
+        break;
+      case 8: // west
+        bottom = 380;
+        left = 80;
+        break;
+      default:
+        return Container();
     }
+    return Positioned(
+        left: left,
+        right: right,
+        top: top,
+        bottom: bottom,
+        child: TextButton(
+          onPressed: () {},
+          child: Text('出价 ${currentBid.value}'),
+        ));
   }
 
   List<Widget> buildCards() {
@@ -97,42 +129,102 @@ class PokerTableController extends GetxController {
         cards.length,
         (index) => Padding(
             padding: const EdgeInsets.only(left: 5),
-            child: PokerCard(cards[index].rank, cards[index].suit, () {
-              _addPlayedCard(PlayedCardModel(
-                  myPosition.value, cards[index].rank, cards[index].suit));
-            })));
+            child: PokerCard(
+                rank: cards[index].rank,
+                suit: cards[index].suit,
+                callback: () {
+                  _addPlayedCard(PlayedCardModel(
+                      myPosition.value, cards[index].rank, cards[index].suit));
+                })));
   }
 
   List<Widget> buildPlayedCards() {
+    // 优先展示王牌
+    if (trumpCards.isNotEmpty) {
+      return [
+        Padding(
+            padding: const EdgeInsets.only(left: 5),
+            child: PokerPlayedCard(
+                '王牌',
+                PokerCard(rank: trumpCards[0].rank, suit: trumpCards[0].suit),
+                false)),
+      ];
+    }
+
     return List.generate(
         playedCards.length,
         (index) => PokerPlayedCard(
-            playedCards[index].name,
-            PokerCard(playedCards[index].rank, playedCards[index].suit, () {}),
+            playedCards[index].position.toString(),
+            PokerCard(
+                rank: playedCards[index].rank, suit: playedCards[index].suit),
             playedCards[index].win));
   }
 
   void _handleProto(Proto p) {
     switch (p.op) {
-      case 1001: // 出价通知
-        bids.value = bidTypeFromStrings(p.data!['bid']);
-        print("收到出价通知:${bids.obs}");
+      case Op.getCard:
+        List jsonList = p.data!['cards'];
+        cards.value = jsonList
+            .map((card) => PlayedCardModel(myPosition.value,
+                Rank.fromIndex(card['type']), Suit.fromIndex(card['suit'])))
+            .toList();
         break;
-      case 1002: // 声明通知
+      case Op.endGetCard:
+        List jsonList = p.data!['cards'];
+        cards.value = jsonList
+            .map((card) => PlayedCardModel(myPosition.value,
+                Rank.fromIndex(card['type']), Suit.fromIndex(card['suit'])))
+            .toList();
+
+        availableBids.clear();
+        currentBidPlayer.value = 0;
+        break;
+      case Op.getShowCard: // 确认收下公共牌
+        var player = p.data!['player'];
+        print('用户$player将公共牌收入');
+        trumpCard = trumpCards[0];
+        trumpOwnerPosition.value = player;
+        trumpCards.clear();
+        break;
+      case Op.showCard:
+        var card = p.data!['card'];
+        trumpCards.add(PlayedCardModel(
+            0, Rank.fromIndex(card['type']), Suit.fromIndex(card['suit'])));
+        break;
+      case Op.bid: // 出价通知
+        availableBids.value = bidTypeList(p.data!['bid']);
+        break;
+      case Op.bided: // 用户出价信息
+        var bid = BidType.fromIndex(p.data!['bid']);
+        var player = p.data!['player'];
+        currentBidPlayer.value = player;
+        currentBid = bid;
+        break;
+      case Op.announce: // 声明通知
         announces.value = announceTypeFromStrings(p.data!['announces']);
-        print("收到声明通知:${announces.value}");
+        print("收到声明通知:${announces}");
         break;
-      case 1003: // 出牌通知
+      case Op.allPass:
+        print('此轮轮空');
+        _nextRound();
+        break;
+      case Op.action: //TODO: 要出牌了
+        List jsonList = p.data!['cards'];
+        // 出牌者
+        currentActionPlayer.value = p.data!['player'];
+        // 可出的牌
+        List<PlayedCardModel> availableCards = jsonList
+            .map((card) => PlayedCardModel(myPosition.value,
+                Rank.fromIndex(card['type']), Suit.fromIndex(card['suit'])))
+            .toList();
     }
   }
-
 
   // 出价操作
   bid(BidType bt) {
     final Map<String, dynamic> data = <String, dynamic>{};
-    data['bid'] = bt.value;
-    print('出价:$bt');
-    _ws.send(Proto(op: 1001, seq: 0, ver: 0, os: 0, data: data));
-    bids.clear();
+    data['bid'] = bt.intValue;
+    _ws.send(Proto(op: Op.bid, data: data));
+    availableBids.clear();
   }
 }

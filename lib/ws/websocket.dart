@@ -77,11 +77,14 @@ class WebSocket with TimerHelper {
 
   void _onConnectionError(error, [stacktrace]) {
     _logger?.warning('Error occurred', error, stacktrace);
+    print('Error occurred error:$error');
+    print('Error occurred stacktrace:$stacktrace');
     statusController.add(ConnectionStatus.disconnected);
   }
 
   void _onConnectionClosed() {
     _logger?.warning('Connection closed');
+   print('Connection closed');
     statusController.add(ConnectionStatus.disconnected);
   }
 
@@ -90,11 +93,14 @@ class WebSocket with TimerHelper {
     try {
       p = Proto.fromJson(json.decode(data));
     } catch (e, stk) {
+      print('Error parsing an event: $e');
+      print('Stack trace: $stk');
       _logger?.warning('Error parsing an event: $e');
       _logger?.warning('Stack trace: $stk');
     }
     if (p == null) return;
     _logger?.info('Event received: ${p.op}');
+    print('Event received: ${p.op}');
     return handler?.call(p);
   }
 

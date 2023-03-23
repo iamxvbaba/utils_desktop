@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:skeleton_desktop/ui/widgets/poker/poker_icons.dart';
 
 /// An enum that expresses a suit of [Card].
 enum Suit {
@@ -42,7 +44,18 @@ enum Suit {
         return '♣';
     }
   }
-
+  IconData icon() {
+    switch (this) {
+      case Suit.spade:
+        return PokerIcons.spade;
+      case Suit.heart:
+        return PokerIcons.heart;
+      case Suit.diamond:
+        return PokerIcons.diamond;
+      default:
+        return PokerIcons.club;
+    }
+  }
   Color color() {
     switch (this) {
       case Suit.spade:
@@ -57,108 +70,41 @@ enum Suit {
   }
 }
 
-class SuitParseFailureException implements Exception {
-  SuitParseFailureException({required this.value});
-
-  final String value;
-
-  String get message => '$value is not a valid string as a rank.';
-}
-
 enum Rank {
-  ace(12),
-  deuce(0),
-  trey(1),
-  four(2),
-  five(3),
-  six(4),
-  seven(5),
-  eight(6),
-  nine(7),
-  ten(8),
-  jack(9),
-  queen(10),
-  king(11);
+  seven(0),
+  eight(1),
+  nine(2),
+  ten(3),
+  jack(4),
+  queen(5),
+  king(6),
+  ace(7);
 
   const Rank(this.power);
 
   /// Returns a [Suit] from an integer value. The value must be 0 <= value <= 12.
   factory Rank.fromIndex(int index) {
-    assert(index >= 0 && index <= 12);
+    assert(index >= 0 && index <= 7);
 
     switch (index) {
       case 0:
-        return Rank.ace;
+        return Rank.seven;
       case 1:
-        return Rank.deuce;
+        return Rank.eight;
       case 2:
-        return Rank.trey;
+        return Rank.nine;
       case 3:
-        return Rank.four;
+        return Rank.ten;
       case 4:
-        return Rank.five;
+        return Rank.jack;
       case 5:
-        return Rank.six;
+        return Rank.queen;
       case 6:
-        return Rank.seven;
+        return Rank.king;
       case 7:
-        return Rank.eight;
-      case 8:
-        return Rank.nine;
-      case 9:
-        return Rank.ten;
-      case 10:
-        return Rank.jack;
-      case 11:
-        return Rank.queen;
-      default:
-        return Rank.king;
-    }
-  }
-
-  /// Parses a char (1-charactor-length string) and returns a [Rank]. The value must be one of `"A"`, `"2"`, `"3"`, `"4"`, `"5"`, `"6"`, `"7"`, `"8"`, `"9"`, `"T"`, `"J"`, `"Q"` or `"K"`.
-  ///
-  /// ```dart
-  /// assert(Rank.parse("A") == Rank.ace);
-  /// assert(Rank.parse("8") == Rank.eight);
-  /// ```
-  ///
-  /// If any string else is given, this throws a [RankParseFailureException].
-  ///
-  /// ```dart
-  /// Rank.parse("a");      // throws RankParseFailureException
-  /// Rank.parse("eight");  // throws RankParseFailureException
-  /// ```
-  factory Rank.parse(String value) {
-    switch (value) {
-      case 'A':
         return Rank.ace;
-      case '2':
-        return Rank.deuce;
-      case '3':
-        return Rank.trey;
-      case '4':
-        return Rank.four;
-      case '5':
-        return Rank.five;
-      case '6':
-        return Rank.six;
-      case '7':
-        return Rank.seven;
-      case '8':
-        return Rank.eight;
-      case '9':
-        return Rank.nine;
-      case '10':
-        return Rank.ten;
-      case 'J':
-        return Rank.jack;
-      case 'Q':
-        return Rank.queen;
-      case 'K':
-        return Rank.king;
       default:
-        throw RankParseFailureException(value);
+        return Rank.king;
     }
   }
 
@@ -171,16 +117,6 @@ enum Rank {
     switch (this) {
       case Rank.ace:
         return 'A';
-      case Rank.deuce:
-        return '2';
-      case Rank.trey:
-        return '3';
-      case Rank.four:
-        return '4';
-      case Rank.five:
-        return '5';
-      case Rank.six:
-        return '6';
       case Rank.seven:
         return '7';
       case Rank.eight:
@@ -199,21 +135,13 @@ enum Rank {
   }
 }
 
-class RankParseFailureException implements Exception {
-  RankParseFailureException(this.value);
-
-  final String value;
-
-  String get message => '$value is not a valid string as a rank.';
-}
-
 class PlayedCardModel {
-  final String name;
+  final int position;
   final Rank rank;
   final Suit suit;
   bool win = false;
 
-  PlayedCardModel(this.name, this.rank, this.suit);
+  PlayedCardModel(this.position, this.rank, this.suit);
 }
 
 enum BidType {
@@ -222,9 +150,56 @@ enum BidType {
   diamonds,
   hearts,
   spades,
-  noTrumps,
+  confirmHokum, // 确认牌型时 选择为Hokum
+  sun,
+  ashkal,
+  reverseSun, // 被人反转之后 接收反转为Sun
+  confirmSun, // // 确认牌型时 选择为Sun
   double,
-  reDouble
+  triple,
+  reDouble,
+  gahwa,
+  lock,
+  open;
+
+  factory BidType.fromIndex(int val) {
+    switch (val) {
+      case 0:
+        return BidType.pass;
+      case 1 << 0:
+        return BidType.clubs;
+      case 1 << 1:
+        return BidType.diamonds;
+      case 1 << 2:
+        return BidType.hearts;
+      case 1 << 3:
+        return BidType.spades;
+      case 1 << 4:
+        return BidType.confirmHokum;
+      case 1 << 5:
+        return BidType.sun;
+      case 1 << 6:
+        return BidType.ashkal;
+      case 1 << 7:
+        return BidType.reverseSun;
+      case 1 << 8:
+        return BidType.confirmSun;
+      case 1 << 9:
+        return BidType.double;
+      case 1 << 10:
+        return BidType.triple;
+      case 1 << 11:
+        return BidType.reDouble;
+      case 1 << 12:
+        return BidType.gahwa;
+      case 1 << 13:
+        return BidType.lock;
+      case 1 << 14:
+        return BidType.open;
+      default:
+        return BidType.pass;
+    }
+  }
 }
 
 extension BidTypeExtension on BidType {
@@ -240,12 +215,28 @@ extension BidTypeExtension on BidType {
         return "Hearts";
       case BidType.spades:
         return "Spades";
-      case BidType.noTrumps:
-        return "NoTrumps";
+      case BidType.confirmHokum:
+        return "ConfirmHokum";
+      case BidType.sun:
+        return "Sun";
+      case BidType.ashkal:
+        return "Ashkal";
+      case BidType.reverseSun:
+        return "ReverseSun";
+      case BidType.confirmSun:
+        return "ConfirmSun";
       case BidType.double:
         return "Double";
+      case BidType.triple:
+        return "Triple";
       case BidType.reDouble:
         return "ReDouble";
+      case BidType.gahwa:
+        return "Gahwa";
+      case BidType.lock:
+        return "Lock";
+      case BidType.open:
+        return "Open";
       default:
         return "";
     }
@@ -268,8 +259,8 @@ extension BidTypeExtension on BidType {
     if (has(BidType.spades)) {
       bts.add(BidType.spades);
     }
-    if (has(BidType.noTrumps)) {
-      bts.add(BidType.noTrumps);
+    if (has(BidType.confirmHokum)) {
+      bts.add(BidType.confirmHokum);
     }
     if (has(BidType.double)) {
       bts.add(BidType.double);
@@ -284,56 +275,50 @@ extension BidTypeExtension on BidType {
     return (index & bt2.index) == bt2.index;
   }
 
-  int get index {
+  int get intValue {
     switch (this) {
       case BidType.pass:
         return 0;
       case BidType.clubs:
-        return 1 << 0; // ♣️
+        return 1 << 0;
       case BidType.diamonds:
-        return 1 << 1; // ♦️
+        return 1 << 1;
       case BidType.hearts:
-        return 1 << 2; // ♥️
+        return 1 << 2;
       case BidType.spades:
-        return 1 << 3; // ♠️
-      case BidType.noTrumps:
+        return 1 << 3;
+      case BidType.confirmHokum:
         return 1 << 4;
-      case BidType.double:
+      case BidType.sun:
         return 1 << 5;
-      case BidType.reDouble:
+      case BidType.ashkal:
         return 1 << 6;
+      case BidType.reverseSun:
+        return 1 << 7;
+      case BidType.confirmSun:
+        return 1 << 8;
+      case BidType.double:
+        return 1 << 9;
+      case BidType.triple:
+        return 1 << 10;
+      case BidType.reDouble:
+        return 1 << 11;
+      case BidType.gahwa:
+        return 1 << 12;
+      case BidType.lock:
+        return 1 << 13;
+      case BidType.open:
+        return 1 << 14;
       default:
-        return -1;
+        return 0;
     }
   }
 }
 
-BidType bidTypeFromString(String val) {
-  switch (val) {
-    case 'Pass':
-      return BidType.pass;
-    case 'Clubs':
-      return BidType.clubs;
-    case 'Diamonds':
-      return BidType.diamonds;
-    case 'Hearts':
-      return BidType.hearts;
-    case 'Spades':
-      return BidType.spades;
-    case 'NoTrumps':
-      return BidType.noTrumps;
-    case 'Double':
-      return BidType.double;
-    case 'ReDouble':
-      return BidType.reDouble;
-  }
-  return BidType.pass;
-}
-
-List<BidType> bidTypeFromStrings(List<dynamic> vals) {
+List<BidType> bidTypeList(List list) {
   List<BidType> bts = [];
-  for (var element in vals) {
-    bts.add(bidTypeFromString(element));
+  for (var element in list) {
+    bts.add(BidType.fromIndex(element));
   }
   return bts;
 }

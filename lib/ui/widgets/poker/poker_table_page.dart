@@ -23,6 +23,7 @@ class PokerTableLayout extends GetView<PokerTableController> {
   Widget build(BuildContext context) {
     return Obx(() => Stack(
           children: [
+            // 计分板
             Positioned(
                 top: 20,
                 right: 20,
@@ -31,6 +32,8 @@ class PokerTableLayout extends GetView<PokerTableController> {
                     controller.ewPoint.value,
                     controller.snTotalPoint.value,
                     controller.snPoint.value)),
+
+            // 连接服务器按钮
             Positioned(
                 bottom: 20,
                 right: 20,
@@ -44,12 +47,16 @@ class PokerTableLayout extends GetView<PokerTableController> {
                   ),
                   child: Text('连接服务器'),
                 )),
+
+            // 出价消息
+            controller.buildBid(),
+
             Positioned(
                 child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const PokerPlayer(
-                  name: "west",
+                PokerPlayer(
+                  position: 8,
                   bidTypes: [],
                   announcesTypes: [],
                 ),
@@ -57,22 +64,26 @@ class PokerTableLayout extends GetView<PokerTableController> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     PokerPlayer(
-                      name: "north",
+                      position: 4,
                       bidTypes: [],
                       announcesTypes: [],
                     ),
+
+                    // 出牌列表
                     PokerPlayedCardList(controller.buildPlayedCards()),
+
+                    // TODO: South, 自己的位置
                     PokerPlayer(
-                      name: controller.myPosition.value,
+                      position: controller.myPosition.value,
                       isSelf: true,
-                      bidTypes: controller.bids.value,
-                      announcesTypes: controller.announces.value,
+                      bidTypes: controller.availableBids,
+                      announcesTypes: controller.announces,
                       children: controller.buildCards(),
                     )
                   ],
                 ),
-                const PokerPlayer(
-                  name: "east",
+                PokerPlayer(
+                  position: 2,
                   bidTypes: [],
                   announcesTypes: [],
                 ),

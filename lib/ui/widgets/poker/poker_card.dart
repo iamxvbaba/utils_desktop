@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:skeleton_desktop/ui/widgets/poker/model.dart';
 
-import 'poker_icons.dart';
-
 class PokerCard extends StatelessWidget {
   final Rank rank;
   final Suit suit;
-  final GestureTapCallback callback;
+  final GestureTapCallback? callback;
+  final double height;
+  final double width;
 
-  const PokerCard(this.rank, this.suit, this.callback, {super.key});
+  const PokerCard(
+      {required this.rank,
+      required this.suit,
+      this.height = 80,
+      this.width = 60,
+      this.callback,
+      super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +22,7 @@ class PokerCard extends StatelessWidget {
         onTap: callback,
         child: HighlightContainer(
           child: ConstrainedBox(
-            constraints: const BoxConstraints.tightFor(height: 80, width: 60),
+            constraints: BoxConstraints.tightFor(height: height, width: width),
             child: AspectRatio(
               aspectRatio: 2.25 / 3.5,
               child: LayoutBuilder(
@@ -48,7 +54,7 @@ class PokerCard extends StatelessWidget {
                           child: FittedBox(
                             fit: BoxFit.contain,
                             child: Icon(
-                              PokerIcons.heart,
+                              suit.icon(),
                               color: suit.color(),
                               size: constraints.maxHeight * 0.475,
                             ),

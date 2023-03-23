@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:skeleton_desktop/ui/widgets/poker/model.dart';
 import 'package:get/get.dart';
+import 'package:skeleton_desktop/ui/widgets/poker/poker_card.dart';
 
 import '../../../controllers/pages/poker_table_controller.dart';
 
 class PokerPlayer extends StatelessWidget {
-  final String name;
+  final int position;
   final bool isSelf;
   final List<Widget>? children;
 
-  final List<BidType> bidTypes; // 展示出价按钮
+  final List<BidType> bidTypes; // 可用出价列表
   final List<AnnounceType> announcesTypes; // 展示出价按钮
 
   const PokerPlayer(
-      {required this.name,
+      {required this.position,
       this.isSelf = false,
       this.children,
       required this.bidTypes,
@@ -25,65 +26,79 @@ class PokerPlayer extends StatelessWidget {
   }
 
   Widget _buildName() {
-    return Padding(
-      padding: const EdgeInsets.all(10),
-      child: Container(
-        height: 60,
-        width: 60,
-        decoration: const BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(40)),
-          color: Colors.blueGrey,
-        ),
-        child: Center(
-          child: Text(name),
-        ),
-      ),
+    final PokerTableController controller = Get.find();
+
+    return Row(
+      children: [
+        controller.trumpOwnerPosition.value == position
+            // 收了公共牌标识
+            ? PokerCard(
+                rank: controller.trumpCard.rank,
+                suit: controller.trumpCard.suit,
+                height: 50,
+                width: 40,
+              )
+            : Container(),
+        //TODO: 当前出牌标识
+
+        Padding(
+          padding: const EdgeInsets.all(10),
+          child: Container(
+            height: 60,
+            width: 60,
+            decoration: BoxDecoration(
+              borderRadius: const BorderRadius.all(Radius.circular(40)),
+              color: controller.currentActionPlayer.value == position
+                  ? Colors.lightGreenAccent
+                  : Colors.blueGrey,
+            ),
+            child: Center(
+              child: Text(position.toString()),
+            ),
+          ),
+        )
+      ],
     );
   }
 
-  Widget _buildBidButton(VoidCallback callback, String text, bool enable) {
-    if (!enable) {
-      return Container();
-    }
-    return SizedBox(
-      height: 50,
-      width: 70,
-      child: ElevatedButton(
-        onPressed: callback,
-        style: ElevatedButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(5),
+  // 出价列表
+  List<Widget> _buildBtnList() {
+    final PokerTableController controller = Get.find();
+    var widgets = <Widget>[];
+
+    widgets.add(Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: _buildName(),
+    ));
+
+    for (var element in bidTypes) {
+      widgets.add(Padding(
+        padding: const EdgeInsets.only(left: 5, right: 5),
+        child: SizedBox(
+          child: TextButton(
+            onPressed: () {
+              controller.bid(element);
+            },
+            style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(5),
+              ),
+              backgroundColor: Colors.black12,
+            ),
+            child: Text(element.value),
           ),
-          backgroundColor: Colors.lightBlueAccent,
         ),
-        child: Text(text),
-      ),
-    );
+      ));
+    }
+    return widgets;
   }
 
-  Widget _buildAnnounceButton(VoidCallback callback, String text, bool enable) {
-    if (!enable) {
-      return Container();
-    }
-    return SizedBox(
-      height: 50,
-      width: 80,
-      child: ElevatedButton(
-        onPressed: callback,
-        style: ElevatedButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(5),
-          ),
-          backgroundColor: Colors.lightBlue,
-        ),
-        child: Text(text),
-      ),
-    );
-  }
+  // Widget _buildAnnounceButton(VoidCallback callback, String text, bool enable) {
+  //    Colors.lightBlue
+  // }
 
   @override
   Widget build(BuildContext context) {
-    final PokerTableController controller = Get.find();
     if (isSelf) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 10),
@@ -91,61 +106,7 @@ class PokerPlayer extends StatelessWidget {
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: _buildName(),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: _buildBidButton(() {
-                    if (hasBid(BidType.clubs)) {
-                      controller.bid(BidType.clubs);
-                    } else if (hasBid(BidType.diamonds)) {
-                      controller.bid(BidType.diamonds);
-                    } else if (hasBid(BidType.hearts)) {
-                      controller.bid(BidType.hearts);
-                    } else {
-                      controller.bid(BidType.spades);
-                    }
-                  },
-                      "Sun",
-                      hasBid(BidType.clubs) ||
-                          hasBid(BidType.diamonds) ||
-                          hasBid(BidType.hearts) ||
-                          hasBid(BidType.spades)),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child:
-                      _buildBidButton(() {}, "Hokom", hasBid(BidType.noTrumps)),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child:
-                      _buildBidButton(() {}, "Double", hasBid(BidType.double)),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child:
-                      _buildBidButton(() {}, "ReD", hasBid(BidType.reDouble)),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: _buildAnnounceButton(() {}, "Seq3",
-                      announcesTypes.contains(AnnounceType.SequenceOf3)),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: _buildAnnounceButton(() {}, "Seq4",
-                      announcesTypes.contains(AnnounceType.SequenceOf4)),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: _buildAnnounceButton(() {}, "Seq5",
-                      announcesTypes.contains(AnnounceType.SequenceOf5)),
-                ),
-              ],
+              children: _buildBtnList(),
             ),
             const SizedBox(
               height: 10,
