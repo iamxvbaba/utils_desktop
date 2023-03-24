@@ -48,15 +48,19 @@ class PokerTableLayout extends GetView<PokerTableController> {
                   child: Text('连接服务器'),
                 )),
 
-            // 出价消息
-            controller.buildBid(),
-
             Positioned(
                 child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 PokerPlayer(
                   position: 8,
+                  currentTrickWinner: controller.currentTrickWinner.value,
+                  contractPlayer: controller.contractPlayer.value,
+                  currentBidPlayer: controller.currentBidPlayer.value,
+                  trumpOwnerPosition: controller.trumpOwnerPosition.value,
+                  currentActionPlayer: controller.currentActionPlayer.value,
+                  currentBid: controller.currentBid,
+                  trumpCard: controller.trumpCard,
                   bidTypes: [],
                   announcesTypes: [],
                 ),
@@ -65,6 +69,13 @@ class PokerTableLayout extends GetView<PokerTableController> {
                   children: [
                     PokerPlayer(
                       position: 4,
+                      currentTrickWinner: controller.currentTrickWinner.value,
+                      contractPlayer: controller.contractPlayer.value,
+                      currentBidPlayer: controller.currentBidPlayer.value,
+                      trumpOwnerPosition: controller.trumpOwnerPosition.value,
+                      currentActionPlayer: controller.currentActionPlayer.value,
+                      currentBid: controller.currentBid,
+                      trumpCard: controller.trumpCard,
                       bidTypes: [],
                       announcesTypes: [],
                     ),
@@ -75,6 +86,13 @@ class PokerTableLayout extends GetView<PokerTableController> {
                     // TODO: South, 自己的位置
                     PokerPlayer(
                       position: controller.myPosition.value,
+                      currentTrickWinner: controller.currentTrickWinner.value,
+                      contractPlayer: controller.contractPlayer.value,
+                      currentBidPlayer: controller.currentBidPlayer.value,
+                      trumpOwnerPosition: controller.trumpOwnerPosition.value,
+                      currentActionPlayer: controller.currentActionPlayer.value,
+                      currentBid: controller.currentBid,
+                      trumpCard: controller.trumpCard,
                       isSelf: true,
                       bidTypes: controller.availableBids,
                       announcesTypes: controller.announces,
@@ -84,6 +102,13 @@ class PokerTableLayout extends GetView<PokerTableController> {
                 ),
                 PokerPlayer(
                   position: 2,
+                  currentTrickWinner: controller.currentTrickWinner.value,
+                  contractPlayer: controller.contractPlayer.value,
+                  currentBidPlayer: controller.currentBidPlayer.value,
+                  trumpOwnerPosition: controller.trumpOwnerPosition.value,
+                  currentActionPlayer: controller.currentActionPlayer.value,
+                  currentBid: controller.currentBid,
+                  trumpCard: controller.trumpCard,
                   bidTypes: [],
                   announcesTypes: [],
                 ),

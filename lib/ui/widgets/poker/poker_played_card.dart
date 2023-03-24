@@ -17,22 +17,15 @@ class PokerPlayedCardList extends StatelessWidget {
 class PokerPlayedCard extends StatelessWidget {
   final String name; // 出牌者
   final PokerCard card; // 出的牌
-  final bool win;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        win
-            ? const Text(
-                'Winner!!!',
-                style: TextStyle(color: Colors.redAccent),
-              )
-            : Container(),
         Text(
           name,
-          style: TextStyle(color: win ? Colors.redAccent : Colors.black),
+          style: const TextStyle(color: Colors.black),
         ),
         Padding(
           padding: const EdgeInsets.only(left: 5),
@@ -42,5 +35,5 @@ class PokerPlayedCard extends StatelessWidget {
     );
   }
 
-  const PokerPlayedCard(this.name, this.card, this.win, {super.key});
+  const PokerPlayedCard(this.name, this.card, {super.key});
 }

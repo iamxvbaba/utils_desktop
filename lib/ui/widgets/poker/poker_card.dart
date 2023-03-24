@@ -7,10 +7,12 @@ class PokerCard extends StatelessWidget {
   final GestureTapCallback? callback;
   final double height;
   final double width;
+  final bool available;
 
   const PokerCard(
       {required this.rank,
       required this.suit,
+      this.available = false,
       this.height = 80,
       this.width = 60,
       this.callback,
@@ -28,7 +30,7 @@ class PokerCard extends StatelessWidget {
               child: LayoutBuilder(
                 builder: (_, constraints) => DecoratedBox(
                   decoration: BoxDecoration(
-                    color: Colors.black12,
+                    color: available ? Colors.lime : Colors.black12,
                     borderRadius:
                         BorderRadius.circular(constraints.maxWidth * 0.1),
                   ),

@@ -14,17 +14,20 @@ class PokerTableController extends GetxController {
   RxList<PlayedCardModel> cards = RxList.from([]); // 手中的牌
   RxList<PlayedCardModel> playedCards = RxList.empty(growable: true); // 已出的牌
 
-  late PlayedCardModel trumpCard; // 王牌
+  PlayedCardModel? trumpCard; // 王牌
   RxInt trumpOwnerPosition = 0.obs; // 王牌所属用户
 
   RxList<BidType> availableBids = RxList.empty(growable: false);
   RxList<AnnounceType> announces = RxList.empty(growable: false);
 
   RxInt currentBidPlayer = 0.obs; // 当前出价的用户
-  late BidType currentBid; // 当前出价
+  BidType? currentBid; // 当前出价
 
   RxInt currentActionPlayer = 0.obs; // 当前出牌者
+  RxInt currentTrickWinner = 0.obs; // 回合赢的人
 
+  RxInt contractPlayer = 0.obs; // 最终出价人
+  RxBool sun = false.obs; // sun 玩法
   late WebSocket _ws;
 
   connect() {
@@ -61,69 +64,6 @@ class PokerTableController extends GetxController {
     currentBidPlayer.value = 0;
   }
 
-  _addPlayedCard(PlayedCardModel cm) {
-    if (playedCards.length >= 4) {
-      return;
-    }
-    cards.removeWhere((e) => e.rank == cm.rank && e.suit == cm.suit);
-    playedCards.add(cm);
-
-    // 已经出了4张牌，选出最大的一张牌 并在5s后清空
-    if (playedCards.length >= 4) {
-      // 不改变原来的排序找出最带的一张
-      List<PlayedCardModel> data = List.from(playedCards);
-      data.sort((a, b) => a.rank.index - b.rank.index);
-      PlayedCardModel f = data.first;
-      data.clear();
-
-      int index =
-          playedCards.indexWhere((e) => e.rank == f.rank && e.suit == f.suit);
-
-      playedCards[index].win = true;
-
-      // 5s后清空
-      Future.delayed(const Duration(seconds: 5)).then((value) {
-        playedCards.clear();
-      });
-    }
-
-    // 再添加一些牌，用于测试
-    if (cards.isEmpty) {}
-  }
-
-  Widget buildBid() {
-    double? top, bottom, left, right;
-    switch (currentBidPlayer.value) {
-      case 1: // south
-        left = 400;
-        bottom = 180;
-        break;
-      case 2: // east
-        bottom = 380;
-        right = 80;
-        break;
-      case 4: // north
-        left = 400;
-        top = 80;
-        break;
-      case 8: // west
-        bottom = 380;
-        left = 80;
-        break;
-      default:
-        return Container();
-    }
-    return Positioned(
-        left: left,
-        right: right,
-        top: top,
-        bottom: bottom,
-        child: TextButton(
-          onPressed: () {},
-          child: Text('出价 ${currentBid.value}'),
-        ));
-  }
-
   List<Widget> buildCards() {
     return List.generate(
         cards.length,
@@ -132,9 +72,13 @@ class PokerTableController extends GetxController {
             child: PokerCard(
                 rank: cards[index].rank,
                 suit: cards[index].suit,
+                available: cards[index].available,
                 callback: () {
-                  _addPlayedCard(PlayedCardModel(
-                      myPosition.value, cards[index].rank, cards[index].suit));
+                  if (!cards[index].available) {
+                    Get.snackbar('error', '这张牌不能出');
+                    return;
+                  }
+                  action(cards[index].hashCode);
                 })));
   }
 
@@ -144,10 +88,8 @@ class PokerTableController extends GetxController {
       return [
         Padding(
             padding: const EdgeInsets.only(left: 5),
-            child: PokerPlayedCard(
-                '王牌',
-                PokerCard(rank: trumpCards[0].rank, suit: trumpCards[0].suit),
-                false)),
+            child: PokerPlayedCard('王牌',
+                PokerCard(rank: trumpCards[0].rank, suit: trumpCards[0].suit))),
       ];
     }
 
@@ -156,8 +98,7 @@ class PokerTableController extends GetxController {
         (index) => PokerPlayedCard(
             playedCards[index].position.toString(),
             PokerCard(
-                rank: playedCards[index].rank, suit: playedCards[index].suit),
-            playedCards[index].win));
+                rank: playedCards[index].rank, suit: playedCards[index].suit)));
   }
 
   void _handleProto(Proto p) {
@@ -165,17 +106,23 @@ class PokerTableController extends GetxController {
       case Op.getCard:
         List jsonList = p.data!['cards'];
         cards.value = jsonList
-            .map((card) => PlayedCardModel(myPosition.value,
-                Rank.fromIndex(card['type']), Suit.fromIndex(card['suit'])))
+            .map((card) => PlayedCardModel(
+                myPosition.value,
+                Rank.fromIndex(card['type']),
+                Suit.fromIndex(card['suit']),
+                card['hashCode']))
             .toList();
         break;
       case Op.endGetCard:
         List jsonList = p.data!['cards'];
         cards.value = jsonList
-            .map((card) => PlayedCardModel(myPosition.value,
-                Rank.fromIndex(card['type']), Suit.fromIndex(card['suit'])))
+            .map((card) => PlayedCardModel(
+                myPosition.value,
+                Rank.fromIndex(card['type']),
+                Suit.fromIndex(card['suit']),
+                card['hashCode']))
             .toList();
-
+        sun.value = p.data!['sun'];
         availableBids.clear();
         currentBidPlayer.value = 0;
         break;
@@ -188,17 +135,18 @@ class PokerTableController extends GetxController {
         break;
       case Op.showCard:
         var card = p.data!['card'];
-        trumpCards.add(PlayedCardModel(
-            0, Rank.fromIndex(card['type']), Suit.fromIndex(card['suit'])));
+        trumpCards.add(PlayedCardModel(0, Rank.fromIndex(card['type']),
+            Suit.fromIndex(card['suit']), card['hashCode']));
         break;
       case Op.bid: // 出价通知
         availableBids.value = bidTypeList(p.data!['bid']);
         break;
       case Op.bided: // 用户出价信息
         var bid = BidType.fromIndex(p.data!['bid']);
-        var player = p.data!['player'];
-        currentBidPlayer.value = player;
+        contractPlayer.value = p.data!['contract_player']; // 买牌者
         currentBid = bid;
+        currentBidPlayer.value = p.data!['player'];
+        print('当前出价用户:${currentBidPlayer.value}');
         break;
       case Op.announce: // 声明通知
         announces.value = announceTypeFromStrings(p.data!['announces']);
@@ -208,15 +156,42 @@ class PokerTableController extends GetxController {
         print('此轮轮空');
         _nextRound();
         break;
-      case Op.action: //TODO: 要出牌了
+      case Op.action: // 要出牌了
         List jsonList = p.data!['cards'];
         // 出牌者
         currentActionPlayer.value = p.data!['player'];
+        List<PlayedCardModel> newCards = [];
         // 可出的牌
-        List<PlayedCardModel> availableCards = jsonList
-            .map((card) => PlayedCardModel(myPosition.value,
-                Rank.fromIndex(card['type']), Suit.fromIndex(card['suit'])))
+        for (var card in cards) {
+          var available = false;
+          for (var availableCard in jsonList) {
+            if (card.hashCode == availableCard['hashCode']) {
+              available = true;
+              print('可用出牌{${card.suit} ${card.rank}');
+            }
+          }
+          card.available = available;
+          newCards.add(card);
+        }
+        cards.value = newCards;
+        break;
+      case Op.actioned: // 有人出牌了
+        List jsonList = p.data!['actions'];
+        playedCards.value = jsonList
+            .map((action) => PlayedCardModel(
+                action['player'],
+                Rank.fromIndex(action['card']['type']),
+                Suit.fromIndex(action['card']['suit']),
+                action['card']['hashCode']))
             .toList();
+        break;
+      case Op.trickWinner:
+        currentTrickWinner.value = p.data!['winner'];
+        print('${p.data!['winner']} 牌最大');
+        // 5s延迟后，将currentTrickWinner清空
+        5.delay(() {
+          currentTrickWinner.value = 0;
+        });
     }
   }
 
@@ -225,6 +200,15 @@ class PokerTableController extends GetxController {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['bid'] = bt.intValue;
     _ws.send(Proto(op: Op.bid, data: data));
+    availableBids.clear();
+  }
+
+  // 出牌操作
+  action(int hashCode) {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['hashCode'] = hashCode;
+    _ws.send(Proto(op: Op.action, data: data));
+    cards.removeWhere((e) => e.hashCode == hashCode);
     availableBids.clear();
   }
 }

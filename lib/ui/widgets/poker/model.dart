@@ -44,6 +44,7 @@ enum Suit {
         return '♣';
     }
   }
+
   IconData icon() {
     switch (this) {
       case Suit.spade:
@@ -56,6 +57,7 @@ enum Suit {
         return PokerIcons.club;
     }
   }
+
   Color color() {
     switch (this) {
       case Suit.spade:
@@ -139,9 +141,10 @@ class PlayedCardModel {
   final int position;
   final Rank rank;
   final Suit suit;
-  bool win = false;
+  final int hashCode;
+  bool available = false; // 可用出牌
 
-  PlayedCardModel(this.position, this.rank, this.suit);
+  PlayedCardModel(this.position, this.rank, this.suit, this.hashCode);
 }
 
 enum BidType {
